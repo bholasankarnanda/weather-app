@@ -52,3 +52,10 @@ body {
   color: #444;
   border-left: 4px solid #2980b9;
 }
+
+#loading {
+  font-size: 800;
+  font-size: 2rem;
+  color: black;
+  display: none;
+}

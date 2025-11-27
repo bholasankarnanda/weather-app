@@ -8,6 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 const apiKey = "da879acfa6f124c235aa12d572d6cba0";
+// Debounce Function
 function debounce(fn, delay) {
     let timer;
     return function (...args) {
@@ -15,7 +16,15 @@ function debounce(fn, delay) {
         timer = setTimeout(() => fn.apply(this, args), delay);
     };
 }
-// Get city cordinates
+function showLoading() {
+    const loading = document.getElementById("loading");
+    loading.style.display = "block";
+}
+function hideLoading() {
+    const loading = document.getElementById("loading");
+    loading.style.display = "none";
+}
+// Get City Location
 function getCityLocation(city) {
     return __awaiter(this, void 0, void 0, function* () {
         const url = `https://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=1&appid=${apiKey}`;
@@ -23,7 +32,7 @@ function getCityLocation(city) {
         return res.json();
     });
 }
-// Get weather using latitude and logitude
+// Get Weather Details
 function getWeather(lat, lon) {
     return __awaiter(this, void 0, void 0, function* () {
         const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}`;
@@ -31,7 +40,10 @@ function getWeather(lat, lon) {
         return res.json();
     });
 }
-// Search function
+function toCelsius(kelvin) {
+    return +(kelvin - 273.15).toFixed(1);
+}
+//  Search Function
 function handleSearch(e) {
     return __awaiter(this, void 0, void 0, function* () {
         const target = e.target;
@@ -53,21 +65,55 @@ function handleSearch(e) {
         }
         const { lat, lon, name } = location;
         const weatherData = yield getWeather(lat, lon);
-        const temperature = weatherData.main.temp;
-        const weatherCondition = weatherData.weather[0];
-        if (!weatherCondition) {
+        hideLoading();
+        if (!weatherData.weather[0]) {
             resultBox.innerHTML = "Weather data not available.";
             return;
         }
-        const condition = weatherCondition.description;
+        const temp = toCelsius(weatherData.main.temp);
+        const feels = toCelsius(weatherData.main.feels_like);
+        const minTemp = toCelsius(weatherData.main.temp_min);
+        const maxTemp = toCelsius(weatherData.main.temp_max);
+        const humidity = weatherData.main.humidity;
+        const pressure = weatherData.main.pressure;
+        const condition = weatherData.weather[0].description;
+        const icon = weatherData.weather[0].icon;
+        if (resultBox.innerHTML.trim() === "") {
+            hideLoading();
+        }
         resultBox.innerHTML = `
-    <p><strong>Location:</strong> ${name}</p>
-    <p><strong>Temperature:</strong> ${temperature}°C</p>
-    <p><strong>Condition:</strong> ${condition}</p>
+    <div class="weather-card">
+      <h3>${name}, ${weatherData.sys.country}</h3>
+      <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="weather" />
+
+      <p><strong>Condition:</strong> ${condition}</p>
+      <p><strong>Temperature:</strong> ${temp}°C</p>
+      <p><strong>Feels Like:</strong> ${feels}°C</p>
+      <p><strong>Min / Max:</strong> ${minTemp}°C / ${maxTemp}°C</p>
+      <p><strong>Humidity:</strong> ${humidity}%</p>
+      <p><strong>Pressure:</strong> ${pressure} hPa</p>
+      <p><strong>Latitude:</strong> ${weatherData.coord.lat}</p>
+      <p><strong>Longitude:</strong> ${weatherData.coord.lon}</p>
+    </div>
   `;
     });
 }
 const citySearchInput = document.getElementById("citySearch");
-citySearchInput.addEventListener("keyup", debounce(handleSearch, 1000));
+const debouncedSearch = debounce(handleSearch, 1000);
+citySearchInput.addEventListener("keyup", (e) => {
+    const target = e.target;
+    const city = target.value.trim();
+    if (city === "") {
+        hideLoading();
+        const resultBox = document.getElementById("result");
+        resultBox.innerHTML = "";
+    }
+    else {
+        showLoading();
+        const resultBox = document.getElementById("result");
+        resultBox.innerHTML = "";
+        debouncedSearch(e);
+    }
+});
 export {};
 //# sourceMappingURL=app.js.map
